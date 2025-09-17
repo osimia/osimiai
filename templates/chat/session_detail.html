@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load markdown_extras %}
+
+{% block title %}Диалог #{{ session.id }} — LegalAI{% endblock %}
+{% block content %}
+<div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-6">
+  {% for m in chat_messages %}
+    {% if m.role != 'system' %}
+      <div class="flex items-start gap-3 {% if m.role == 'user' %}justify-end{% endif %}">
+        {% if m.role == 'assistant' %}
+          <div class="w-8 h-8 bg-gray-700 text-white flex items-center justify-center rounded-full shrink-0 font-bold text-xs">AI</div>
+        {% endif %}
+        
+        <div class="max-w-xl p-3 rounded-lg prose prose-sm {% if m.role == 'user' %}bg-blue-500 text-white{% else %}bg-white{% endif %}">
+          {{ m.content|markdown|safe }}
+          {% if m.role == 'assistant' %}
+            <div class="message-actions mt-2">
+              <!-- Источники будут добавлены здесь -->
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  {% empty %}
+    <div class="flex-1 flex flex-col items-center justify-center text-center">
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">LegalAI</h1>
+      <p class="text-xl text-gray-600">Как я могу помочь вам сегодня?</p>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- Input Form -->
+<div class="bg-white border-t border-gray-200 p-4">
+  <form id="chat-form" class="max-w-3xl mx-auto flex items-end gap-3">
+    <textarea 
+      id="chat-input"
+      name="message" 
+      placeholder="Введите ваше сообщение..." 
+      class="flex-1 p-3 bg-gray-100 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow" 
+      rows="1"
+      data-auto-resize
+    ></textarea>
+    <button 
+      id="send-button"
+      type="submit" 
+      class="w-12 h-12 flex items-center justify-center bg-blue-500 text-white rounded-full shrink-0 hover:bg-blue-600 transition-colors disabled:bg-blue-300"
+      title="Отправить (Ctrl+Enter)"
+    >
+      <svg class="send-icon h-6 w-6 transform rotate-45" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+      </svg>
+      <svg class="spinner-icon h-6 w-6 animate-spin" style="display: none;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+    </button>
+  </form>
+  <p class="text-center text-sm text-gray-500 mt-3">
+    Ответы LegalAI могут быть неточными. Всегда проверяйте важную информацию.
+  </p>
+</div>
+  <script>
+    const chatSocket = new WebSocket(
+        'ws://' + window.location.host +
+        '/ws/chat/' + '{{ session.id }}' + '/'
+    );
+
+    const chatContainer = document.getElementById('chat-container');
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('chat-input');
+    const sendButton = document.getElementById('send-button');
+    const sendIcon = sendButton.querySelector('.send-icon');
+    const spinnerIcon = sendButton.querySelector('.spinner-icon');
+
+    // Auto-resize textarea
+    messageInput.addEventListener('input', () => {
+        messageInput.style.height = 'auto';
+        messageInput.style.height = (messageInput.scrollHeight) + 'px';
+    });
+
+    // Send message handlers
+    sendButton.addEventListener('click', handleSendMessage);
+    messageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    });
+
+    function handleSendMessage() {
+        const message = messageInput.value.trim();
+        if (!message) return;
+
+        appendMessage(message, 'user');
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+        
+        // Send via WebSocket
+        chatSocket.send(JSON.stringify({'message': message}));
+        
+        // Show loading state
+        sendButton.disabled = true;
+        messageInput.disabled = true;
+        sendIcon.style.display = 'none';
+        spinnerIcon.style.display = 'block';
+    }
+
+    function appendMessage(text, sender, id) {
+        const messageWrapper = document.createElement('div');
+        messageWrapper.className = `flex items-start gap-3 ${sender === 'user' ? 'justify-end' : ''}`;
+        if (id) messageWrapper.id = id;
+
+        let messageHTML = '';
+        if (sender === 'assistant') {
+            messageHTML += `<div class="w-8 h-8 bg-gray-700 text-white flex items-center justify-center rounded-full shrink-0 font-bold text-xs">AI</div>`;
+        }
+
+        const messageBubble = document.createElement('div');
+        messageBubble.className = `max-w-xl p-3 rounded-lg prose prose-sm ${sender === 'user' ? 'bg-blue-500 text-white' : 'bg-white'}`;
+        messageBubble.innerHTML = text;
+
+        if (sender === 'user') {
+            messageWrapper.appendChild(messageBubble);
+        } else {
+            messageWrapper.innerHTML = messageHTML;
+            messageWrapper.appendChild(messageBubble);
+        }
+
+        chatContainer.appendChild(messageWrapper);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        if (data.type === 'chunk') {
+            let assistantResponse = document.getElementById('assistant-response');
+            if (!assistantResponse) {
+                const loadingId = `assistant-response`;
+                const loadingIndicatorHTML = `
+                    <div class="flex space-x-1.5">
+                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0.1s;"></div>
+                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
+                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0.3s;"></div>
+                    </div>
+                `;
+                appendMessage(loadingIndicatorHTML, 'assistant', loadingId);
+                assistantResponse = document.getElementById(loadingId);
+            }
+            
+            // Add chunk to response
+            const contentDiv = assistantResponse.querySelector('.prose');
+            if (contentDiv) {
+                contentDiv.innerHTML += data.message;
+                // Highlight code blocks
+                if (typeof Prism !== 'undefined') {
+                    Prism.highlightAllUnder(assistantResponse);
+                }
+            }
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        } else if (data.type === 'sources') {
+            const assistantResponse = document.getElementById('assistant-response');
+            if (assistantResponse) {
+                let actionsContainer = assistantResponse.querySelector('.message-actions');
+                if (!actionsContainer) {
+                    actionsContainer = document.createElement('div');
+                    actionsContainer.className = 'message-actions mt-2';
+                    assistantResponse.querySelector('.prose').appendChild(actionsContainer);
+                }
+                
+                let sourcesHtml = '<div class="text-xs font-semibold text-gray-600 mb-2">Источники:</div>';
+                data.sources.forEach(source => {
+                    sourcesHtml += `<div class="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs mr-2 mb-1">${source.title}</div>`;
+                });
+                actionsContainer.innerHTML = sourcesHtml;
+            }
+        } else if (data.type === 'error') {
+            appendMessage(`<p class="text-red-500">${data.message}</p>`, 'assistant');
+        }
+        
+        // Reset loading state
+        if (document.getElementById('assistant-response')) {
+            document.getElementById('assistant-response').id = '';
+        }
+        sendButton.disabled = false;
+        messageInput.disabled = false;
+        sendIcon.style.display = 'block';
+        spinnerIcon.style.display = 'none';
+        messageInput.focus();
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    // Auto-scroll to bottom on load
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  </script>
+{% endblock %}

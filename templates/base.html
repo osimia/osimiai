@@ -1,0 +1,139 @@
+{% load static %}
+<!doctype html>
+<html lang="ru" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}LegalAI Таджикистан{% endblock %}</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Marked.js for Markdown parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  
+  <!-- Prism.js for syntax highlighting -->
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  
+  <style>
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="h-full bg-gray-100 font-sans">
+  {% csrf_token %}
+  <div class="flex h-full">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gray-800 text-white flex flex-col p-4 shrink-0">
+      <!-- Logo -->
+      <div class="flex items-center justify-center mb-6 py-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </div>
+          <div class="flex flex-col">
+            <h1 class="text-lg font-bold text-white">LegalAI</h1>
+            <p class="text-xs text-gray-400">Таджикистан</p>
+          </div>
+        </div>
+      </div>
+      
+      <a href="{% url 'chat:index' %}" class="flex items-center justify-center gap-2 w-full px-4 py-2 mb-6 text-sm font-medium bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+        </svg>
+        Новый чат
+      </a>
+
+      <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">История</h2>
+      <nav class="flex-1 space-y-1">
+        {% for s in sidebar_sessions %}
+          <div class="group flex items-center justify-between hover:bg-gray-700 rounded-md {% if s.pk == session.pk %}bg-blue-600{% endif %}">
+            <a href="{% url 'chat:session_detail' s.pk %}" class="flex-1 px-3 py-2 text-sm text-gray-300 truncate {% if s.pk == session.pk %}text-white{% endif %}">
+              {{ s.title|truncatechars:25 }}
+            </a>
+            <button 
+              data-chat-id="{{ s.pk }}" 
+              data-chat-title="{{ s.title|escapejs }}"
+              onclick="deleteChat(this)"
+              class="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-400 transition-all duration-200"
+              title="Удалить чат"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        {% endfor %}
+      </nav>
+
+      <div class="mt-auto pt-4 border-t border-gray-700">
+        {% if user.is_authenticated %}
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-blue-600 text-white flex items-center justify-center rounded-full font-bold text-sm">
+              {{ user.username.0|upper }}
+            </div>
+            <span class="text-sm text-gray-300">{{ user.username }}</span>
+          </div>
+        {% else %}
+          <a href="{% url 'login' %}" class="block w-full text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">Вход</a>
+        {% endif %}
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Auto-resize textarea functionality
+      const textareas = document.querySelectorAll('textarea[data-auto-resize]');
+      textareas.forEach(textarea => {
+        textarea.addEventListener('input', () => {
+          textarea.style.height = 'auto';
+          textarea.style.height = (textarea.scrollHeight) + 'px';
+        });
+      });
+    });
+
+    // Delete chat function
+    function deleteChat(button) {
+      const chatId = button.getAttribute('data-chat-id');
+      const chatTitle = button.getAttribute('data-chat-title');
+      
+      if (confirm(`Вы уверены, что хотите удалить чат "${chatTitle}"?`)) {
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/session/${chatId}/delete/`;
+        
+        // Add CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfToken) {
+          const csrfInput = document.createElement('input');
+          csrfInput.type = 'hidden';
+          csrfInput.name = 'csrfmiddlewaretoken';
+          csrfInput.value = csrfToken.value;
+          form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Вход — LegalAI{% endblock %}
+{% block content %}
+<main style="max-width:520px;margin:3rem auto;">
+  <article style="padding:2rem 2rem 1.5rem;border:1px solid #e6e6e6;border-radius:14px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.04)">
+    <header style="margin-bottom:1rem">
+      <h2 style="margin:0 0 .25rem 0">Вход в аккаунт</h2>
+      <p style="margin:0;color:#6b7280">Продолжите, чтобы воспользоваться цифровым правовым консультантом</p>
+    </header>
+    <form method="post" action="{% url 'login' %}" style="display:grid;gap:.75rem">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <input type="hidden" name="next" value="{{ next|default:'/' }}">
+      <button type="submit" style="width:100%">Войти</button>
+    </form>
+    <footer style="margin-top:1rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap">
+      <span style="font-size:.9rem;color:#6b7280">Нет аккаунта?</span>
+      <a role="button" class="secondary" href="{% url 'chat:signup' %}">Зарегистрироваться</a>
+    </footer>
+  </article>
+  <p class="disclaimer">Ответы носят информационный характер и не являются юридической консультацией. Юрисдикция: Республика Таджикистан.</p>
+  
+</main>
+{% endblock %}

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Chat UI</title>
+
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Prism.js for syntax highlighting -->
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+    <style>
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="h-full bg-gray-100 font-sans">
+
+    <div class="flex h-full">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-800 text-white flex flex-col p-4 shrink-0">
+            <button class="flex items-center justify-center gap-2 w-full px-4 py-2 mb-6 text-sm font-medium bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                Новый чат
+            </button>
+
+            <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">История</h2>
+            <nav class="flex-1 space-y-1">
+                <a href="#" class="block px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md truncate">Разговор о трудовом кодексе</a>
+                <a href="#" class="block px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md truncate">Обсуждение проекта на Python</a>
+                <a href="#" class="block px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-md truncate">Идеи для нового интерфейса</a>
+            </nav>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="flex-1 flex flex-col">
+            <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- Messages will be appended here -->
+            </div>
+
+            <!-- Input Form -->
+            <div class="bg-white border-t border-gray-200 p-4">
+                <div class="max-w-3xl mx-auto flex items-end gap-3">
+                    <textarea id="chat-input" placeholder="Введите ваше сообщение..." class="flex-1 p-3 bg-gray-100 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow" rows="1"></textarea>
+                    <button id="send-button" class="w-12 h-12 flex items-center justify-center bg-blue-500 text-white rounded-full shrink-0 hover:bg-blue-600 transition-colors disabled:bg-blue-300">
+                        <!-- Heroicon: paper-airplane -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform rotate-45" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chatContainer = document.getElementById('chat-container');
+            const chatInput = document.getElementById('chat-input');
+            const sendButton = document.getElementById('send-button');
+
+            // --- Auto-resize textarea --- //
+            chatInput.addEventListener('input', () => {
+                chatInput.style.height = 'auto';
+                chatInput.style.height = (chatInput.scrollHeight) + 'px';
+            });
+
+            // --- Event Listeners --- //
+            sendButton.addEventListener('click', handleSendMessage);
+            chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                }
+            });
+
+            /**
+             * Handles sending a message: creates user message, 
+             * gets bot response, and updates UI.
+             */
+            function handleSendMessage() {
+                const message = chatInput.value.trim();
+                if (!message) return;
+
+                appendMessage(message, 'user');
+                chatInput.value = '';
+                chatInput.style.height = 'auto'; // Reset height
+
+                // Simulate bot response
+                simulateBotResponse();
+            }
+
+            /**
+             * Appends a message to the chat container.
+             * @param {string} text - The message content.
+             * @param {'user' | 'bot'} sender - The sender of the message.
+             * @param {string} [id] - Optional ID for the message element.
+             */
+            function appendMessage(text, sender, id) {
+                const messageWrapper = document.createElement('div');
+                messageWrapper.className = `flex items-start gap-3 ${sender === 'user' ? 'justify-end' : ''}`;
+                if (id) {
+                    messageWrapper.id = id;
+                }
+
+                let messageHTML = '';
+                if (sender === 'bot') {
+                    messageHTML += `
+                        <div class="w-8 h-8 bg-gray-700 text-white flex items-center justify-center rounded-full shrink-0 font-bold text-xs">AI</div>
+                    `;
+                }
+
+                const messageBubble = document.createElement('div');
+                messageBubble.className = `max-w-xl p-3 rounded-lg prose prose-sm ${sender === 'user' ? 'bg-blue-500 text-white' : 'bg-white'}`;
+                messageBubble.innerHTML = text; // Use innerHTML to render parsed markdown
+
+                if (sender === 'user') {
+                    messageWrapper.appendChild(messageBubble);
+                } else {
+                    messageWrapper.innerHTML = messageHTML;
+                    messageWrapper.appendChild(messageBubble);
+                }
+
+                chatContainer.appendChild(messageWrapper);
+                chatContainer.scrollTop = chatContainer.scrollHeight; // Scroll to bottom
+            }
+
+            /**
+             * Simulates a bot response with a loading indicator and a delay.
+             */
+            async function simulateBotResponse() {
+                const loadingId = `bot-loading-${Date.now()}`;
+                const loadingIndicatorHTML = `
+                    <div class="flex space-x-1.5">
+                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0.1s;"></div>
+                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
+                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0.3s;"></div>
+                    </div>
+                `;
+                appendMessage(loadingIndicatorHTML, 'bot', loadingId);
+
+                try {
+                    const botResponseText = await getBotResponse();
+                    const loadingElement = document.getElementById(loadingId);
+
+                    if (loadingElement) {
+                        // Parse markdown and replace loading indicator
+                        const parsedHtml = marked.parse(botResponseText);
+                        loadingElement.querySelector('.prose').innerHTML = parsedHtml;
+                        
+                        // Highlight code blocks after rendering
+                        Prism.highlightAllUnder(loadingElement);
+                    }
+                } catch (error) {
+                    console.error("Error getting bot response:", error);
+                    const loadingElement = document.getElementById(loadingId);
+                    if (loadingElement) {
+                        loadingElement.querySelector('.prose').innerHTML = "<p class='text-red-500'>Произошла ошибка при получении ответа.</p>";
+                    }
+                }
+            }
+
+            /**
+             * Simulates a network request to get a bot's response.
+             * @returns {Promise<string>} A promise that resolves with a mock response.
+             */
+            function getBotResponse() {
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        const mockResponse = "Здравствуйте! Вот основные положения **статьи 15 Трудового кодекса РТ**:\n\n*   Трудовые отношения — отношения, основанные на соглашении между работником и работодателем.\n*   Работник обязуется лично выполнять трудовую функцию.\n*   Работодатель обязуется предоставлять работнику работу, обеспечивать условия труда и своевременно выплачивать заработную плату.\n\nПример кода на Python:\n```python\nfor i in range(5):\n  print(f'Hello, world! {i+1}')\n```";
+                        resolve(mockResponse);
+                    }, 2000); // 2-second delay
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>

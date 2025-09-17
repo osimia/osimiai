@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Диалоги — LegalAI{% endblock %}
+{% block content %}
+  <!-- Welcome Section -->
+  <div class="flex-1 flex flex-col items-center justify-center p-6">
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">
+        Здравствуйте, {{ user.first_name|default:user.username }}
+      </h1>
+      <p class="text-xl text-gray-600">Как я могу помочь вам сегодня?</p>
+    </div>
+
+    <!-- Sample Questions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 max-w-2xl w-full">
+      <div class="bg-white rounded-lg p-4 border border-gray-200 hover:border-blue-300 cursor-pointer transition-colors">
+        <h3 class="font-medium text-gray-800 mb-2">Трудовое право</h3>
+        <p class="text-sm text-gray-600">Вопросы по трудовому кодексу Таджикистана</p>
+      </div>
+      <div class="bg-white rounded-lg p-4 border border-gray-200 hover:border-blue-300 cursor-pointer transition-colors">
+        <h3 class="font-medium text-gray-800 mb-2">Гражданское право</h3>
+        <p class="text-sm text-gray-600">Консультации по гражданским вопросам</p>
+      </div>
+      <div class="bg-white rounded-lg p-4 border border-gray-200 hover:border-blue-300 cursor-pointer transition-colors">
+        <h3 class="font-medium text-gray-800 mb-2">Семейное право</h3>
+        <p class="text-sm text-gray-600">Помощь в семейных правовых вопросах</p>
+      </div>
+      <div class="bg-white rounded-lg p-4 border border-gray-200 hover:border-blue-300 cursor-pointer transition-colors">
+        <h3 class="font-medium text-gray-800 mb-2">Административное право</h3>
+        <p class="text-sm text-gray-600">Вопросы административного характера</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input Form -->
+  <div class="bg-white border-t border-gray-200 p-4">
+    <form method="post" action="" class="max-w-3xl mx-auto">
+      {% csrf_token %}
+      <input type="hidden" name="title" value="Новый диалог">
+      <div class="flex items-end gap-3">
+        <textarea 
+          name="first_prompt" 
+          placeholder="Введите ваш вопрос..." 
+          class="flex-1 p-3 bg-gray-100 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow" 
+          rows="1" 
+          data-auto-resize
+          required
+        ></textarea>
+        <button 
+          type="submit" 
+          class="w-12 h-12 flex items-center justify-center bg-blue-500 text-white rounded-full shrink-0 hover:bg-blue-600 transition-colors"
+          title="Отправить"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform rotate-45" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+          </svg>
+        </button>
+      </div>
+      <p class="text-center text-sm text-gray-500 mt-3">
+        LegalAI может допускать ошибки. Проверяйте важную информацию.
+      </p>
+    </form>
+  </div>
+{% endblock %}
