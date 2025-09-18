@@ -79,11 +79,31 @@
 
       <div class="mt-auto pt-4 border-t border-gray-700">
         {% if user.is_authenticated %}
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-blue-600 text-white flex items-center justify-center rounded-full font-bold text-sm">
-              {{ user.username.0|upper }}
+          <div class="relative">
+            <div class="flex items-center gap-3 cursor-pointer hover:bg-gray-700 rounded-lg p-2 transition-colors" onclick="toggleUserDropdown()">
+              <div class="w-8 h-8 bg-blue-600 text-white flex items-center justify-center rounded-full font-bold text-sm">
+                {{ user.username.0|upper }}
+              </div>
+              <span class="text-sm text-gray-300">{{ user.username }}</span>
+              <svg class="w-4 h-4 text-gray-400 ml-auto transition-transform duration-200" id="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
             </div>
-            <span class="text-sm text-gray-300">{{ user.username }}</span>
+            
+            <!-- Dropdown Menu -->
+            <div id="user-dropdown" class="absolute bottom-full left-0 w-full mb-2 bg-gray-700 rounded-lg shadow-lg border border-gray-600 hidden">
+              <div class="py-1">
+                <form method="post" action="{% url 'logout' %}" class="w-full">
+                  {% csrf_token %}
+                  <button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition-colors w-full text-left">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Выйти
+                  </button>
+                </form>
+              </div>
+            </div>
           </div>
         {% else %}
           <a href="{% url 'login' %}" class="block w-full text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">Вход</a>
@@ -134,6 +154,34 @@
         form.submit();
       }
     }
+
+    // Toggle user dropdown function
+    function toggleUserDropdown() {
+      const dropdown = document.getElementById('user-dropdown');
+      const arrow = document.getElementById('dropdown-arrow');
+      
+      if (dropdown.classList.contains('hidden')) {
+        dropdown.classList.remove('hidden');
+        arrow.style.transform = 'rotate(180deg)';
+      } else {
+        dropdown.classList.add('hidden');
+        arrow.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+      const dropdown = document.getElementById('user-dropdown');
+      const userSection = event.target.closest('.relative');
+      
+      if (dropdown && !dropdown.classList.contains('hidden') && !userSection) {
+        dropdown.classList.add('hidden');
+        const arrow = document.getElementById('dropdown-arrow');
+        if (arrow) {
+          arrow.style.transform = 'rotate(0deg)';
+        }
+      }
+    });
   </script>
 </body>
 </html>

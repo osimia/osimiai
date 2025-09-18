@@ -14,6 +14,13 @@ from knowledge.rag_service import RAGService
 import os
 
 
+def landing_page(request):
+    """Landing page for non-authenticated users"""
+    if request.user.is_authenticated:
+        return redirect('chat:index')
+    return render(request, 'landing.html')
+
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def index(request):

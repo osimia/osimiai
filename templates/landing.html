@@ -1,0 +1,405 @@
+{% load static %}
+<!doctype html>
+<html lang="ru" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LegalAI Таджикистан - Универсальный AI-ассистент для юридических вопросов</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  
+  <style>
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    /* Gradient animations */
+    .gradient-bg {
+      background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c);
+      background-size: 400% 400%;
+      animation: gradient 15s ease infinite;
+    }
+    
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .feature-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+  </style>
+</head>
+<body class="h-full bg-gray-50 font-sans">
+  <!-- Navigation -->
+  <nav class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <div class="flex flex-col">
+              <h1 class="text-lg font-bold text-gray-900">LegalAI</h1>
+              <p class="text-xs text-gray-500">Таджикистан</p>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center space-x-4">
+          <button onclick="openLoginModal()" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+            Войти
+          </button>
+          <button onclick="openSignupModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            Регистрация
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="relative overflow-hidden">
+    <div class="gradient-bg absolute inset-0 opacity-10"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
+      <div class="text-center">
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+          Универсальный AI-ассистент для
+          <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            юридических вопросов
+          </span>
+        </h1>
+        <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          LegalAI использует передовые модели искусственного интеллекта для помощи в решении правовых вопросов, 
+          консультаций и анализа документов. Персонализированный, быстрый и надежный.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <button onclick="openLoginModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-all transform hover:scale-105 shadow-lg">
+            Начать работу - Бесплатно
+          </button>
+          <div class="flex items-center text-sm text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            <span>Доверяют юристы по всему Таджикистану</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+          Работает там, где работаете вы
+        </h2>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          Получите мгновенный доступ к юридической помощи с любого устройства
+        </p>
+      </div>
+      
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="feature-card bg-white p-6 rounded-xl border border-gray-200">
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.906-1.471L3 21l2.471-5.094A8.955 8.955 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">AI Консультант</h3>
+          <p class="text-gray-600">Получите мгновенные ответы на юридические вопросы с помощью искусственного интеллекта.</p>
+        </div>
+
+        <div class="feature-card bg-white p-6 rounded-xl border border-gray-200">
+          <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Анализ документов</h3>
+          <p class="text-gray-600">Анализируйте и проверяйте правовые документы с помощью передовых алгоритмов.</p>
+        </div>
+
+        <div class="feature-card bg-white p-6 rounded-xl border border-gray-200">
+          <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">База знаний</h3>
+          <p class="text-gray-600">Доступ к обширной базе правовых знаний и прецедентов Таджикистана.</p>
+        </div>
+
+        <div class="feature-card bg-white p-6 rounded-xl border border-gray-200">
+          <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Безопасность</h3>
+          <p class="text-gray-600">Ваши данные защищены современными методами шифрования и конфиденциальности.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Professional Features Section -->
+  <section class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+          Создано для юридических профессионалов
+        </h2>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          Специализированные инструменты для адвокатов, юристов и правовых консультантов
+        </p>
+      </div>
+      
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <h3 class="font-semibold text-gray-900 mb-2">Анализатор договоров</h3>
+          <p class="text-gray-600 text-sm">Автоматический анализ и проверка правовых документов</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <h3 class="font-semibold text-gray-900 mb-2">Поиск прецедентов</h3>
+          <p class="text-gray-600 text-sm">Быстрый поиск релевантных судебных решений</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <h3 class="font-semibold text-gray-900 mb-2">Генератор документов</h3>
+          <p class="text-gray-600 text-sm">Создание правовых документов на основе шаблонов</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <h3 class="font-semibold text-gray-900 mb-2">Консультант по законам</h3>
+          <p class="text-gray-600 text-sm">Экспертные консультации по законодательству РТ</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <h3 class="font-semibold text-gray-900 mb-2">Помощник по исследованиям</h3>
+          <p class="text-gray-600 text-sm">Глубокий анализ правовых вопросов и исследований</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm">
+          <h3 class="font-semibold text-gray-900 mb-2">Переводчик документов</h3>
+          <p class="text-gray-600 text-sm">Перевод правовых документов с сохранением контекста</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-20 bg-blue-600">
+    <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl lg:text-4xl font-bold text-white mb-4">
+        Раскройте свой юридический потенциал с LegalAI!
+      </h2>
+      <p class="text-xl text-blue-100 mb-8">
+        Присоединяйтесь к тысячам юристов, которые уже используют LegalAI для повышения эффективности работы
+      </p>
+      <button onclick="openLoginModal()" class="bg-white text-blue-600 hover:bg-gray-50 px-8 py-4 rounded-lg text-lg font-semibold transition-all transform hover:scale-105 shadow-lg inline-block">
+        Начать работу бесплатно
+      </button>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="flex items-center gap-3 mb-4 md:mb-0">
+          <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold">LegalAI Таджикистан</h3>
+            <p class="text-gray-400 text-sm">Ваш надежный AI-помощник в правовых вопросах</p>
+          </div>
+        </div>
+        <div class="text-gray-400 text-sm">
+          © 2024 LegalAI Таджикистан. Все права защищены.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Login Modal -->
+  <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 transform transition-all">
+      <div class="p-8">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-900">Вход в аккаунт</h2>
+          <button onclick="closeLoginModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <p class="text-gray-600 mb-6">Продолжайте, чтобы воспользоваться цифровым правовым консультантом</p>
+        
+        <form method="post" action="{% url 'login' %}" class="space-y-4">
+          {% csrf_token %}
+          <div>
+            <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Имя пользователя</label>
+            <input type="text" id="username" name="username" required 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+          </div>
+          
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Пароль</label>
+            <input type="password" id="password" name="password" required 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+          </div>
+          
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors">
+            Войти
+          </button>
+        </form>
+        
+        <div class="mt-6 text-center">
+          <p class="text-gray-600">Нет аккаунта? 
+            <button onclick="switchToSignup()" class="text-blue-600 hover:text-blue-700 font-semibold">
+              Зарегистрироваться
+            </button>
+          </p>
+        </div>
+        
+        <div class="mt-6 pt-6 border-t border-gray-200">
+          <p class="text-xs text-gray-500 text-center">
+            Отвечает нашим информационной характери и не заменяют юридические консультации. Юрисдикция: Республика Таджикистан.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signup Modal -->
+  <div id="signupModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 transform transition-all">
+      <div class="p-8">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-900">Создать аккаунт</h2>
+          <button onclick="closeSignupModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <p class="text-gray-600 mb-6">Присоединяйтесь к LegalAI для получения профессиональной юридической помощи</p>
+        
+        <form method="post" action="{% url 'chat:signup' %}" class="space-y-4">
+          {% csrf_token %}
+          <div>
+            <label for="signup_username" class="block text-sm font-medium text-gray-700 mb-2">Имя пользователя</label>
+            <input type="text" id="signup_username" name="username" required 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+          </div>
+          
+          <div>
+            <label for="signup_password1" class="block text-sm font-medium text-gray-700 mb-2">Пароль</label>
+            <input type="password" id="signup_password1" name="password1" required 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+          </div>
+          
+          <div>
+            <label for="signup_password2" class="block text-sm font-medium text-gray-700 mb-2">Подтвердите пароль</label>
+            <input type="password" id="signup_password2" name="password2" required 
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+          </div>
+          
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors">
+            Создать аккаунт
+          </button>
+        </form>
+        
+        <div class="mt-6 text-center">
+          <p class="text-gray-600">Уже есть аккаунт? 
+            <button onclick="switchToLogin()" class="text-blue-600 hover:text-blue-700 font-semibold">
+              Войти
+            </button>
+          </p>
+        </div>
+        
+        <div class="mt-6 pt-6 border-t border-gray-200">
+          <p class="text-xs text-gray-500 text-center">
+            Создавая аккаунт, вы соглашаетесь с нашими условиями использования и политикой конфиденциальности.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Modal functions
+    function openLoginModal() {
+      document.getElementById('loginModal').classList.remove('hidden');
+      document.getElementById('loginModal').classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLoginModal() {
+      document.getElementById('loginModal').classList.add('hidden');
+      document.getElementById('loginModal').classList.remove('flex');
+      document.body.style.overflow = 'auto';
+    }
+
+    function openSignupModal() {
+      document.getElementById('signupModal').classList.remove('hidden');
+      document.getElementById('signupModal').classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSignupModal() {
+      document.getElementById('signupModal').classList.add('hidden');
+      document.getElementById('signupModal').classList.remove('flex');
+      document.body.style.overflow = 'auto';
+    }
+
+    function switchToSignup() {
+      closeLoginModal();
+      openSignupModal();
+    }
+
+    function switchToLogin() {
+      closeSignupModal();
+      openLoginModal();
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('loginModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeLoginModal();
+      }
+    });
+
+    document.getElementById('signupModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeSignupModal();
+      }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeLoginModal();
+        closeSignupModal();
+      }
+    });
+  </script>
+</body>
+</html>
