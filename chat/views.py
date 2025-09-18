@@ -5,8 +5,9 @@ from django.contrib import messages
 from django.db import transaction
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login as auth_login
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 import json
+import time
 from .models import ChatSession, Message, DeletionAudit, SystemPolicy
 from .utils import generate_chat_title
 from services.gemini_client import GeminiClient, get_system_instruction
@@ -26,6 +27,11 @@ def landing_page(request):
 def index(request):
     # Создание новой сессии по POST
     if request.method == "POST":
+        # Проверяем лимит на создание новых чатов
+        if not ChatSession.can_create_new_session(request.user):
+            messages.error(request, 'Вы достигли лимита в 5 активных чатов. Удалите или архивируйте старые чаты для создания новых.')
+            return redirect('chat:index')
+        
         first_prompt = (request.POST.get("first_prompt") or "").strip()
         
         # Автоматически генерируем название на основе первого вопроса
@@ -48,12 +54,12 @@ def index(request):
                 if not os.getenv('GEMINI_API_KEY'):
                     raise RuntimeError('GEMINI_API_KEY не задан. Добавьте ключ в .env')
                 client = GeminiClient()
-                # RAG: Ищем релевантный контекст
-                rag_service = RAGService()
-                search_results = rag_service.search(first_prompt)
+                # RAG: Временно отключен из-за проблем с аутентификацией embedding API
+                # rag_service = RAGService()
+                # search_results = rag_service.search(first_prompt)
                 rag_context = ""
-                if search_results:
-                    rag_context = "\n\n".join([doc.page_content for doc in search_results])
+                # if search_results:
+                #     rag_context = "\n\n".join([doc.page_content for doc in search_results])
 
                 # При первом сообщении история пуста
                 result = client.generate(
@@ -75,9 +81,18 @@ def index(request):
 def session_detail(request, pk: int):
     session = get_object_or_404(ChatSession, pk=pk, user=request.user)
     messages_qs = session.messages.all().order_by('created_at', 'pk')
+    from django.utils import timezone
+    from datetime import timedelta
+    twelve_hours_ago = timezone.now() - timedelta(hours=12)
+    recent_user_messages_count = session.messages.filter(
+        role='user',
+        created_at__gte=twelve_hours_ago
+    ).count()
     return render(request, 'chat/session_detail.html', {
         'session': session,
         'chat_messages': messages_qs,
+        'twelve_hours_ago': twelve_hours_ago,
+        'recent_user_messages_count': recent_user_messages_count,
     })
 
 
@@ -87,8 +102,11 @@ def post_message(request, pk: int):
     session = get_object_or_404(ChatSession, pk=pk, user=request.user)
     user_text = (request.POST.get('message') or '').strip()
     if not user_text:
-        messages.warning(request, 'Введите сообщение')
-        return redirect('chat:session_detail', pk=pk)
+        return JsonResponse({'error': 'Введите сообщение'}, status=400)
+
+    # Проверяем лимит сообщений для этого чата
+    if not session.can_send_message():
+        return JsonResponse({'error': 'Вы достигли лимита в 10 сообщений за 12 часов для этого чата. Попробуйте позже или создайте новый чат.'}, status=429)
 
     # Сохраняем сообщение пользователя
     Message.objects.create(session=session, role='user', content=user_text)
@@ -102,25 +120,57 @@ def post_message(request, pk: int):
             system_instruction = msg.content
             break
 
-    # Вызов Gemini
-    try:
-        if not os.getenv('GEMINI_API_KEY'):
-            raise RuntimeError('GEMINI_API_KEY не задан. Добавьте ключ в .env')
-        client = GeminiClient()
-        result = client.generate(
-            history=history,
-            user_text=user_text,
-            system_instruction=system_instruction,
-        )
-        assistant_text = (result.get('text') or '').strip() or 'Не удалось получить ответ от модели.'
-        Message.objects.create(session=session, role='assistant', content=assistant_text, model=result.get('model'))
-    except Exception as e:
-        Message.objects.create(session=session, role='assistant', content=f"Ошибка при обращении к модели: {e}")
+    def generate_stream():
+        try:
+            if not os.getenv('GEMINI_API_KEY'):
+                yield f"data: {json.dumps({'error': 'GEMINI_API_KEY не задан'})}\n\n"
+                return
+            
+            client = GeminiClient()
+            
+            # RAG: Временно отключен из-за проблем с аутентификацией embedding API
+            # rag_service = RAGService()
+            # search_results = rag_service.search(user_text)
+            rag_context = ""
+            # if search_results:
+            #     rag_context = "\n\n".join([doc.page_content for doc in search_results])
 
-    # Обновим updated_at сессии
-    ChatSession.objects.filter(pk=session.pk).update()
+            stream = client.generate_stream(
+                history=history,
+                user_text=user_text,
+                system_instruction=system_instruction,
+                rag_context=rag_context
+            )
+            
+            full_response = ""
+            for chunk in stream:
+                if chunk.text:
+                    full_response += chunk.text
+                    yield f"data: {json.dumps({'chunk': chunk.text})}\n\n"
+                    time.sleep(0.01)  # Small delay to simulate typing
+            
+            # Сохраняем полный ответ в базу данных
+            Message.objects.create(
+                session=session, 
+                role='assistant', 
+                content=full_response,
+                model=client.default_model
+            )
+            
+            # Обновим updated_at сессии
+            ChatSession.objects.filter(pk=session.pk).update()
+            
+            yield f"data: {json.dumps({'done': True})}\n\n"
+            
+        except Exception as e:
+            error_msg = f"Ошибка при обращении к модели: {e}"
+            Message.objects.create(session=session, role='assistant', content=error_msg)
+            yield f"data: {json.dumps({'error': error_msg})}\n\n"
 
-    return redirect('chat:session_detail', pk=pk)
+    response = StreamingHttpResponse(generate_stream(), content_type='text/plain')
+    response['Cache-Control'] = 'no-cache'
+    response['X-Accel-Buffering'] = 'no'  # Disable nginx buffering
+    return response
 
 
 @login_required

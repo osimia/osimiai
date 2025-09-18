@@ -1,6 +1,6 @@
 import os
 from typing import Optional, Dict, Any
-from google import genai
+import google.generativeai as genai
 
 
 class GeminiClient:
@@ -8,7 +8,8 @@ class GeminiClient:
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             raise RuntimeError("GEMINI_API_KEY не установлен в окружении")
-        self.client = genai.Client(api_key=api_key)
+        # Configure the API key globally
+        genai.configure(api_key=api_key)
         self.default_model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 
     def generate(

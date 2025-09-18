@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
 
 
 class ChatSession(models.Model):
@@ -11,6 +13,21 @@ class ChatSession(models.Model):
 
     def __str__(self) -> str:
         return self.title or f"Сессия #{self.pk}"
+    
+    @classmethod
+    def can_create_new_session(cls, user):
+        """Check if user can create a new chat session (max 5 sessions)"""
+        active_sessions_count = cls.objects.filter(user=user, is_archived=False).count()
+        return active_sessions_count < 5
+    
+    def can_send_message(self):
+        """Check if user can send a message in this session (max 10 messages per 12 hours)"""
+        twelve_hours_ago = timezone.now() - timedelta(hours=12)
+        recent_user_messages = self.messages.filter(
+            role='user',
+            created_at__gte=twelve_hours_ago
+        ).count()
+        return recent_user_messages < 10
 
 
 class SystemPolicy(models.Model):
