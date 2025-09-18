@@ -12,11 +12,14 @@ channels-redis>=4.2
 django-ratelimit>=4.1
 # Отладка/мониторинг (по желанию)
 sentry-sdk>=2.0
-markdown2>=2.4
+markdown==3.7
 
 # For RAG (Retrieval-Augmented Generation)
-langchain>=0.1.20
-langchain-google-genai>=1.0.2
-langchain-community>=0.0.36
-faiss-cpu>=1.8.0
-pypdf>=4.2.0
+langchain==0.3.7
+langchain-chroma==0.1.4
+langchain-google-genai==2.1.12
+chromadb==0.5.20
+pypdf==5.1.0
+sentence-transformers==3.0.1
+PyPDF2==3.0.1
+google-generativeai==0.8.5

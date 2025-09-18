@@ -115,18 +115,19 @@ DATABASES = {
 }
 
 # Support DATABASE_URL (e.g. Railway) without dj-database-url
-DATABASE_URL = os.environ.get('DATABASE_URL')
-if DATABASE_URL:
-    url = urlparse(DATABASE_URL)
-    if url.scheme in ('postgres', 'postgresql'):
-        DATABASES['default'] = {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': url.path.lstrip('/'),
-            'USER': url.username or '',
-            'PASSWORD': url.password or '',
-            'HOST': url.hostname or '',
-            'PORT': str(url.port or ''),
-        }
+# Disabled for local development - use SQLite instead
+# DATABASE_URL = os.environ.get('DATABASE_URL')
+# if DATABASE_URL:
+#     url = urlparse(DATABASE_URL)
+#     if url.scheme in ('postgres', 'postgresql'):
+#         DATABASES['default'] = {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': url.path.lstrip('/'),
+#             'USER': url.username or '',
+#             'PASSWORD': url.password or '',
+#             'HOST': url.hostname or '',
+#             'PORT': str(url.port or ''),
+#         }
 
 
 # Password validation

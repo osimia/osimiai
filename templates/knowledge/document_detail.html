@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ document.title }} - LegalAI{% endblock %}
+
+{% block content %}
+<div class="flex-1 p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Навигация -->
+        <div class="mb-6">
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="{% url 'knowledge:document_list' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L9 5.414V17a1 1 0 102 0V5.414l5.293 5.293a1 1 0 001.414-1.414l-7-7z"></path>
+                            </svg>
+                            Документы
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ document.title|truncatechars:50 }}</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- Заголовок документа -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-12 w-12">
+                            <div class="h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <h1 class="text-2xl font-bold text-gray-900">{{ document.title }}</h1>
+                            <div class="flex items-center mt-1 space-x-4">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    {{ document.get_document_type_display }}
+                                </span>
+                                {% if document.status == 'ready' %}
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                        Готов к использованию
+                                    </span>
+                                {% elif document.status == 'processing' %}
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        Обрабатывается
+                                    </span>
+                                {% elif document.status == 'error' %}
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                        Ошибка обработки
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        {% if document.status == 'error' %}
+                        <form method="post" action="{% url 'knowledge:reprocess_document' document.pk %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="inline-flex items-center px-3 py-2 border border-yellow-300 shadow-sm text-sm leading-4 font-medium rounded-md text-yellow-700 bg-yellow-50 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                Переобработать
+                            </button>
+                        </form>
+                        {% endif %}
+                        
+                        <form method="post" action="{% url 'knowledge:delete_document' document.pk %}" 
+                              class="inline" onsubmit="return confirm('Вы уверены, что хотите удалить этот документ?')">
+                            {% csrf_token %}
+                            <button type="submit" class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                Удалить
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Метаданные документа -->
+            <div class="px-6 py-4">
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Загружен</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ document.created_at|date:"d.m.Y в H:i" }}</dd>
+                    </div>
+                    {% if document.processed_at %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Обработан</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ document.processed_at|date:"d.m.Y в H:i" }}</dd>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Размер файла</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ document.file.size|filesizeformat }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Фрагментов</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ total_chunks }}</dd>
+                    </div>
+                </dl>
+                
+                {% if document.description %}
+                <div class="mt-4">
+                    <dt class="text-sm font-medium text-gray-500">Описание</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ document.description }}</dd>
+                </div>
+                {% endif %}
+                
+                {% if document.error_message %}
+                <div class="mt-4">
+                    <dt class="text-sm font-medium text-red-500">Ошибка</dt>
+                    <dd class="mt-1 text-sm text-red-700 bg-red-50 p-3 rounded-md">{{ document.error_message }}</dd>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Превью документа -->
+        {% if preview %}
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">Превью документа</h2>
+            </div>
+            <div class="px-6 py-4">
+                <div class="bg-gray-50 rounded-md p-4">
+                    <pre class="whitespace-pre-wrap text-sm text-gray-700 font-mono">{{ preview }}</pre>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Фрагменты документа -->
+        {% if chunks %}
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">
+                    Фрагменты документа 
+                    <span class="text-sm font-normal text-gray-500">(показано первые 10 из {{ total_chunks }})</span>
+                </h2>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% for chunk in chunks %}
+                <div class="px-6 py-4">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center mb-2">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    Фрагмент {{ forloop.counter }}
+                                </span>
+                                {% if chunk.chroma_id %}
+                                <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    В векторной БД
+                                </span>
+                                {% endif %}
+                            </div>
+                            <p class="text-sm text-gray-700 leading-relaxed">{{ chunk.content|truncatechars:500 }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if total_chunks > 10 %}
+            <div class="px-6 py-4 bg-gray-50 text-center">
+                <p class="text-sm text-gray-500">
+                    Показано 10 из {{ total_chunks }} фрагментов. 
+                    Остальные фрагменты доступны для поиска в системе.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

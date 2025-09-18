@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Поиск документов - LegalAI{% endblock %}
+
+{% block content %}
+<div class="flex-1 p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Заголовок -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Поиск по документам</h1>
+            <p class="mt-2 text-gray-600">Семантический поиск по загруженным правовым документам</p>
+        </div>
+
+        <!-- Форма поиска -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="p-6">
+                <form method="get" action="{% url 'knowledge:search_documents' %}">
+                    <div class="flex flex-col space-y-4">
+                        <!-- Поисковый запрос -->
+                        <div>
+                            <label for="q" class="block text-sm font-medium text-gray-700 mb-2">
+                                Поисковый запрос
+                            </label>
+                            <input type="text" 
+                                   id="q" 
+                                   name="q" 
+                                   value="{{ query }}"
+                                   placeholder="Например: права человека, налоговое законодательство, трудовые отношения..."
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg">
+                        </div>
+                        
+                        <!-- Фильтры по типу документа -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Тип документа (необязательно)
+                            </label>
+                            <div class="flex flex-wrap gap-3">
+                                {% for value, label in document_types %}
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" 
+                                           name="types" 
+                                           value="{{ value }}"
+                                           {% if value in selected_types %}checked{% endif %}
+                                           class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                    <span class="ml-2 text-sm text-gray-700">{{ label }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Кнопки -->
+                        <div class="flex justify-between items-center">
+                            <div class="flex space-x-3">
+                                <button type="submit" 
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium">
+                                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                    Найти
+                                </button>
+                                
+                                {% if query %}
+                                <a href="{% url 'knowledge:search_documents' %}" 
+                                   class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium">
+                                    Очистить
+                                </a>
+                                {% endif %}
+                            </div>
+                            
+                            <a href="{% url 'knowledge:document_list' %}" 
+                               class="text-blue-600 hover:text-blue-800 font-medium">
+                                ← Вернуться к документам
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Результаты поиска -->
+        {% if query %}
+        <div class="bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">
+                    Результаты поиска
+                    {% if results %}
+                        <span class="text-sm font-normal text-gray-500">(найдено {{ results|length }} результатов)</span>
+                    {% endif %}
+                </h2>
+            </div>
+            
+            {% if results %}
+                <div class="divide-y divide-gray-200">
+                    {% for result in results %}
+                    <div class="px-6 py-6">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <!-- Заголовок документа -->
+                                <div class="flex items-center mb-2">
+                                    <h3 class="text-lg font-medium text-gray-900">
+                                        <a href="{% url 'knowledge:document_detail' result.document_id %}" 
+                                           class="hover:text-blue-600">
+                                            {{ result.document_title }}
+                                        </a>
+                                    </h3>
+                                    <span class="ml-3 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        {{ result.document_type_display }}
+                                    </span>
+                                </div>
+                                
+                                <!-- Релевантность -->
+                                <div class="flex items-center mb-3">
+                                    <span class="text-sm text-gray-500 mr-2">Релевантность:</span>
+                                    <div class="flex-1 bg-gray-200 rounded-full h-2 max-w-xs">
+                                        <div class="bg-blue-600 h-2 rounded-full w-0" 
+                                             data-width="{{ result.similarity|floatformat:0 }}"></div>
+                                    </div>
+                                    <span class="ml-2 text-sm text-gray-600">{{ result.similarity|floatformat:1 }}%</span>
+                                </div>
+                                
+                                <!-- Содержимое фрагмента -->
+                                <div class="bg-gray-50 rounded-lg p-4 mb-3">
+                                    <p class="text-sm text-gray-700 leading-relaxed">{{ result.content }}</p>
+                                </div>
+                                
+                                <!-- Метаданные -->
+                                {% if result.metadata %}
+                                <div class="flex flex-wrap gap-2">
+                                    {% for key, value in result.metadata.items %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700">
+                                        {{ key }}: {{ value }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="px-6 py-12 text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">Ничего не найдено</h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        По запросу "{{ query }}" не найдено подходящих документов.
+                    </p>
+                    <div class="mt-6">
+                        <p class="text-sm text-gray-600 mb-4">Попробуйте:</p>
+                        <ul class="text-sm text-gray-500 space-y-1">
+                            <li>• Использовать другие ключевые слова</li>
+                            <li>• Упростить запрос</li>
+                            <li>• Проверить правописание</li>
+                            <li>• Загрузить больше документов</li>
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <!-- Подсказки для поиска -->
+        <div class="bg-blue-50 rounded-lg p-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">Как использовать поиск</h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Введите ключевые слова или фразы для поиска</li>
+                            <li>Система найдет наиболее релевантные фрагменты документов</li>
+                            <li>Используйте фильтры по типу документа для уточнения результатов</li>
+                            <li>Поиск работает на основе семантического анализа текста</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Примеры запросов -->
+        <div class="mt-6 bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Примеры поисковых запросов</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h4 class="font-medium text-gray-700 mb-2">Общие темы:</h4>
+                    <ul class="space-y-1 text-sm text-gray-600">
+                        <li>• "права человека"</li>
+                        <li>• "налоговое законодательство"</li>
+                        <li>• "трудовые отношения"</li>
+                        <li>• "административные правонарушения"</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-medium text-gray-700 mb-2">Конкретные вопросы:</h4>
+                    <ul class="space-y-1 text-sm text-gray-600">
+                        <li>• "порядок регистрации предприятий"</li>
+                        <li>• "ответственность за нарушение договора"</li>
+                        <li>• "процедура обжалования решений"</li>
+                        <li>• "сроки исковой давности"</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Set progress bar widths after page load
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBars = document.querySelectorAll('[data-width]');
+    progressBars.forEach(bar => {
+        const width = bar.getAttribute('data-width');
+        bar.style.width = width + '%';
+    });
+});
+</script>
+{% endblock %}

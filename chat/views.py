@@ -54,14 +54,21 @@ def index(request):
                 if not os.getenv('GEMINI_API_KEY'):
                     raise RuntimeError('GEMINI_API_KEY не задан. Добавьте ключ в .env')
                 client = GeminiClient()
-                # RAG: Временно отключен из-за проблем с аутентификацией embedding API
-                # rag_service = RAGService()
-                # search_results = rag_service.search(first_prompt)
+                # RAG context - поиск в базе знаний
                 rag_context = ""
-                # if search_results:
-                #     rag_context = "\n\n".join([doc.page_content for doc in search_results])
-
-                # При первом сообщении история пуста
+                try:
+                    from knowledge.chroma_service import ChromaService
+                    chroma_service = ChromaService()
+                    search_results = chroma_service.search_documents(first_prompt, limit=3)
+                    if search_results:
+                        rag_context = "Контекст из правовых документов Таджикистана:\n\n"
+                        for i, result in enumerate(search_results, 1):
+                            rag_context += f"{i}. Из документа '{result.get('document_title', 'Неизвестный документ')}':\n"
+                            rag_context += f"{result['content'][:400]}...\n\n"
+                        rag_context += "Используйте этот контекст для более точного и обоснованного ответа на вопрос пользователя.\n"
+                except Exception as e:
+                    print(f"Ошибка RAG поиска: {e}")
+                    rag_context = ""
                 result = client.generate(
                     history=[],
                     user_text=first_prompt,
@@ -128,12 +135,21 @@ def post_message(request, pk: int):
             
             client = GeminiClient()
             
-            # RAG: Временно отключен из-за проблем с аутентификацией embedding API
-            # rag_service = RAGService()
-            # search_results = rag_service.search(user_text)
+            # RAG context - поиск в базе знаний
             rag_context = ""
-            # if search_results:
-            #     rag_context = "\n\n".join([doc.page_content for doc in search_results])
+            try:
+                from knowledge.chroma_service import ChromaService
+                chroma_service = ChromaService()
+                search_results = chroma_service.search_documents(user_text, limit=3)
+                if search_results:
+                    rag_context = "Контекст из правовых документов Таджикистана:\n\n"
+                    for i, result in enumerate(search_results, 1):
+                        rag_context += f"{i}. Из документа '{result.get('document_title', 'Неизвестный документ')}':\n"
+                        rag_context += f"{result['content'][:400]}...\n\n"
+                    rag_context += "Используйте этот контекст для более точного и обоснованного ответа на вопрос пользователя.\n"
+            except Exception as e:
+                print(f"Ошибка RAG поиска: {e}")
+                rag_context = ""
 
             stream = client.generate_stream(
                 history=history,
