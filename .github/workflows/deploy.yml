@@ -12,8 +12,8 @@ env:
   SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: ${{ secrets.GCP_REGION }}
-  REPO: ${{ secrets.ARTIFACT_REGISTRY }} # e.g. europe-docker.pkg.dev
-  IMAGE: ${{ secrets.ARTIFACT_REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVICE }}/${{ secrets.CLOUD_RUN_SERVICE }}:${{ github.sha }}
+  REPO: ${{ secrets.GCP_REGION }}-docker.pkg.dev
+  IMAGE: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVICE }}/app:${{ github.sha }}
 
 jobs:
   deploy:
@@ -78,7 +78,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker --quiet ${{ secrets.ARTIFACT_REGISTRY }}
+        run: gcloud auth configure-docker --quiet ${{ secrets.GCP_REGION }}-docker.pkg.dev
 
       - name: Build Docker image
         run: |
