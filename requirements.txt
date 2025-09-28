@@ -30,6 +30,7 @@ gunicorn>=21.2
 # Static/media on Google Cloud Storage
 django-storages>=1.14.4
 google-cloud-storage>=2.18.2
+boto3>=1.34
 
 # Optional: serve static via WhiteNoise when not using GCS
 whitenoise>=6.7.0

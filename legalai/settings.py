@@ -12,8 +12,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import json
 from dotenv import load_dotenv
 from urllib.parse import urlparse
+from google.oauth2 import service_account
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -142,19 +144,19 @@ DATABASES = {
 }
 
 # Support DATABASE_URL (e.g. Railway) without dj-database-url
-# Disabled for local development - use SQLite instead
-# DATABASE_URL = os.environ.get('DATABASE_URL')
-# if DATABASE_URL:
-#     url = urlparse(DATABASE_URL)
-#     if url.scheme in ('postgres', 'postgresql'):
-#         DATABASES['default'] = {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': url.path.lstrip('/'),
-#             'USER': url.username or '',
-#             'PASSWORD': url.password or '',
-#             'HOST': url.hostname or '',
-#             'PORT': str(url.port or ''),
-#         }
+# If DATABASE_URL is provided, override the default DATABASES config
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    url = urlparse(DATABASE_URL)
+    if url.scheme in ('postgres', 'postgresql'):
+        DATABASES['default'] = {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': url.path.lstrip('/'),
+            'USER': url.username or '',
+            'PASSWORD': url.password or '',
+            'HOST': url.hostname or '',
+            'PORT': str(url.port or ''),
+        }
 
 
 # Password validation
@@ -204,14 +206,60 @@ GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME', '')
 
 if USE_GCS and GS_BUCKET_NAME:
     INSTALLED_APPS.append('storages')
-    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-    STATICFILES_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
     GS_DEFAULT_ACL = None
     GS_AUTO_CREATE_BUCKET = False
-    # When using GCS for static, it's common to serve from bucket URL
+    # Use modern STORAGES API (Django 4.2+)
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+            "OPTIONS": {"bucket_name": GS_BUCKET_NAME, "location": "media"},
+        },
+        "staticfiles": {
+            "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+            "OPTIONS": {"bucket_name": GS_BUCKET_NAME, "location": "static"},
+        },
+    }
+    # Optionally load service account credentials from JSON env var
+    GCS_CREDENTIALS_JSON = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+    if GCS_CREDENTIALS_JSON:
+        try:
+            GS_CREDENTIALS = service_account.Credentials.from_service_account_info(
+                json.loads(GCS_CREDENTIALS_JSON) if isinstance(GCS_CREDENTIALS_JSON, str) else GCS_CREDENTIALS_JSON
+            )
+        except Exception:
+            # Fallback to file path via GOOGLE_APPLICATION_CREDENTIALS
+            pass
+    # When using GCS for static/media, serve from bucket URL
     STATIC_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/static/"
     MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/media/"
 
+# Selectel S3-compatible Object Storage (optional). When USE_S3=true, use S3 for static and media.
+USE_S3 = os.getenv('USE_S3', 'false').lower() == 'true'
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', '')
+AWS_S3_ENDPOINT_URL = os.getenv('S3_ENDPOINT_URL') or os.getenv('AWS_S3_ENDPOINT_URL', '')
+AWS_S3_REGION_NAME = os.getenv('S3_REGION_NAME') or os.getenv('AWS_S3_REGION_NAME', '')
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', '')
+AWS_S3_ADDRESSING_STYLE = os.getenv('AWS_S3_ADDRESSING_STYLE', 'auto')  # or 'virtual'
+AWS_S3_SIGNATURE_VERSION = os.getenv('AWS_S3_SIGNATURE_VERSION', 's3v4')
+AWS_S3_VERIFY = os.getenv('AWS_S3_VERIFY', 'true').lower() == 'true'
+
+if USE_S3 and AWS_STORAGE_BUCKET_NAME:
+    INSTALLED_APPS.append('storages')
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {"location": "media"},
+        },
+        "staticfiles": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {"location": "static"},
+        },
+    }
+    # Construct URL for serving static/media if no custom CDN domain is set
+    if AWS_S3_ENDPOINT_URL and AWS_STORAGE_BUCKET_NAME:
+        STATIC_URL = f"{AWS_S3_ENDPOINT_URL.rstrip('/')}/{AWS_STORAGE_BUCKET_NAME}/static/"
+        MEDIA_URL = f"{AWS_S3_ENDPOINT_URL.rstrip('/')}/{AWS_STORAGE_BUCKET_NAME}/media/"
 # WhiteNoise can be used when not using GCS (local or simple Cloud Run static)
 USE_WHITENOISE = os.getenv('USE_WHITENOISE', 'false').lower() == 'true'
 if USE_WHITENOISE:

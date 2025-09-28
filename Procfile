@@ -1,0 +1,1 @@
+web: sh -c "python manage.py migrate --noinput && python manage.py collectstatic --noinput || true && gunicorn legalai.wsgi:application --bind 0.0.0.0:${PORT:-8080} --workers ${WEB_CONCURRENCY:-3} --timeout 120"
