@@ -34,7 +34,7 @@ class ChromaService:
             return
             
         self.chroma_client = chromadb.PersistentClient(
-            path=os.path.join(settings.BASE_DIR, "chroma_db"),
+            path=os.getenv("CHROMA_DB_PATH", getattr(settings, 'CHROMA_DB_PATH', os.path.join(settings.BASE_DIR, "chroma_db"))),
             settings=Settings(anonymized_telemetry=False)
         )
         

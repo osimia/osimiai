@@ -23,3 +23,13 @@ pypdf==5.1.0
 sentence-transformers==3.0.1
 PyPDF2==3.0.1
 google-generativeai==0.8.5
+
+# Production web server
+gunicorn>=21.2
+
+# Static/media on Google Cloud Storage
+django-storages>=1.14.4
+google-cloud-storage>=2.18.2
+
+# Optional: serve static via WhiteNoise when not using GCS
+whitenoise>=6.7.0

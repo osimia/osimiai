@@ -35,6 +35,14 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'false').lower() == 'true'
 USE_RELOADER = False
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') if os.environ.get('ALLOWED_HOSTS') else []
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('CSRF_TRUSTED_ORIGINS') else []
+
+# Behind Cloud Run proxy ensure request.is_secure()
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = False  # Cloud Run terminates TLS
 
 
 # Application definition
@@ -106,14 +114,30 @@ CHANNEL_LAYERS = {
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+DB_ENGINE = os.environ.get('DB_ENGINE', 'django.db.backends.sqlite3')
+DB_NAME = os.environ.get('DB_NAME', str(BASE_DIR / 'db.sqlite3'))
+DB_USER = os.environ.get('DB_USER', '')
+DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
+DB_HOST = os.environ.get('DB_HOST', '')
+DB_PORT = os.environ.get('DB_PORT', '')
+
+# Support Cloud SQL (PostgreSQL) via Cloud Run unix socket
+# Provide INSTANCE_CONNECTION_NAME like: project:region:instance
+INSTANCE_CONNECTION_NAME = os.environ.get('INSTANCE_CONNECTION_NAME', '')
+
+if DB_ENGINE == 'django.db.backends.postgresql':
+    # Prefer unix domain socket when INSTANCE_CONNECTION_NAME is set and no explicit host
+    if INSTANCE_CONNECTION_NAME and not DB_HOST:
+        DB_HOST = f"/cloudsql/{INSTANCE_CONNECTION_NAME}"
+
 DATABASES = {
     'default': {
-        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.sqlite3'),
-        'NAME': os.environ.get('DB_NAME', str(BASE_DIR / 'db.sqlite3')),
-        'USER': os.environ.get('DB_USER', ''),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        'HOST': os.environ.get('DB_HOST', ''),
-        'PORT': os.environ.get('DB_PORT', ''),
+        'ENGINE': DB_ENGINE,
+        'NAME': DB_NAME,
+        'USER': DB_USER,
+        'PASSWORD': DB_PASSWORD,
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
     }
 }
 
@@ -174,6 +198,26 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Google Cloud Storage (optional). When USE_GCS=true, use GCS for static and media.
+USE_GCS = os.getenv('USE_GCS', 'false').lower() == 'true'
+GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME', '')
+
+if USE_GCS and GS_BUCKET_NAME:
+    INSTALLED_APPS.append('storages')
+    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+    STATICFILES_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+    GS_DEFAULT_ACL = None
+    GS_AUTO_CREATE_BUCKET = False
+    # When using GCS for static, it's common to serve from bucket URL
+    STATIC_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/static/"
+    MEDIA_URL = f"https://storage.googleapis.com/{GS_BUCKET_NAME}/media/"
+
+# WhiteNoise can be used when not using GCS (local or simple Cloud Run static)
+USE_WHITENOISE = os.getenv('USE_WHITENOISE', 'false').lower() == 'true'
+if USE_WHITENOISE:
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -182,3 +226,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Authentication settings
 LOGIN_REDIRECT_URL = '/chat/'
 LOGOUT_REDIRECT_URL = '/'
+
+# ChromaDB persistent path (default to BASE_DIR/chroma_db for local; override in Cloud Run)
+CHROMA_DB_PATH = os.getenv('CHROMA_DB_PATH', str(BASE_DIR / 'chroma_db'))

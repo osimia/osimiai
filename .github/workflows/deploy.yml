@@ -1,0 +1,70 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: ${{ secrets.GCP_REGION }}
+  REPO: ${{ secrets.ARTIFACT_REGISTRY }} # e.g. europe-docker.pkg.dev
+  IMAGE: ${{ secrets.ARTIFACT_REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVICE }}/${{ secrets.CLOUD_RUN_SERVICE }}:${{ github.sha }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Set up gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker --quiet ${{ secrets.ARTIFACT_REGISTRY }}
+
+      - name: Build Docker image
+        run: |
+          docker build -t $IMAGE .
+
+      - name: Push Docker image
+        run: docker push $IMAGE
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy $SERVICE \
+            --project $PROJECT_ID \
+            --region $REGION \
+            --image $IMAGE \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 8080 \
+            --cpu 1 \
+            --memory 1Gi \
+            --max-instances 5 \
+            --set-env-vars DJANGO_DEBUG=false \
+            --set-env-vars DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }} \
+            --set-env-vars ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }} \
+            --set-env-vars DB_ENGINE=django.db.backends.postgresql \
+            --set-env-vars DB_NAME=${{ secrets.DB_NAME }} \
+            --set-env-vars DB_USER=${{ secrets.DB_USER }} \
+            --set-env-vars DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            --set-env-vars INSTANCE_CONNECTION_NAME=${{ secrets.INSTANCE_CONNECTION_NAME }} \
+            --set-env-vars USE_GCS=true \
+            --set-env-vars GS_BUCKET_NAME=${{ secrets.GCS_BUCKET }} \
+            --set-env-vars CHROMA_DB_PATH=/mnt/chroma \
+            --add-cloudsql-instances ${{ secrets.INSTANCE_CONNECTION_NAME }} \
+            --add-volume name=chroma-vol,type=cloud-storage,bucket=${{ secrets.GCS_BUCKET }} \
+            --mount volume=chroma-vol,path=/mnt/chroma
