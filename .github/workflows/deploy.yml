@@ -31,6 +31,20 @@ jobs:
           fi
         shell: bash
 
+      - name: Validate core deploy secrets (project/region/repo/service)
+        shell: bash
+        run: |
+          missing=()
+          [ -z "${{ secrets.GCP_PROJECT_ID }}" ] && missing+=(GCP_PROJECT_ID)
+          [ -z "${{ secrets.GCP_REGION }}" ] && missing+=(GCP_REGION)
+          [ -z "${{ secrets.ARTIFACT_REGISTRY }}" ] && missing+=(ARTIFACT_REGISTRY)
+          [ -z "${{ secrets.CLOUD_RUN_SERVICE }}" ] && missing+=(CLOUD_RUN_SERVICE)
+          if [ ${#missing[@]} -ne 0 ]; then
+            echo "::error::Missing required secrets: ${missing[*]}";
+            echo "Set them in GitHub → Settings → Secrets and variables → Actions";
+            exit 1;
+          fi
+
       - name: Validate GCP_CREDENTIALS JSON structure
         env:
           GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
